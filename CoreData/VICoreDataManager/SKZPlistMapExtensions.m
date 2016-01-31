@@ -50,7 +50,7 @@ NSString *SKZArchivedClassName = @"_isa";
 {
     id managedRootObject = nil;
     
-    if ( className == Nil )
+    if ( className == nil )
     {
         return self;     // No class specifier found, return as raw dict
     }
