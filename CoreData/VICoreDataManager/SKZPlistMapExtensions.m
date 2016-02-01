@@ -105,6 +105,7 @@ NSString *SKZArchivedClassName = @"_isa";
         
         // should we put a checkClass here?
         
+        // nil check necessary because NSString's createObject can return nil for the _isa key
         if ( managedSubObj != nil )
         {
             [managedRootObject safeSetValueSKZ:managedSubObj forKey:coreDataKey];
