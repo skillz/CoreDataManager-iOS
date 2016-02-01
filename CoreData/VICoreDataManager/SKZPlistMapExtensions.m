@@ -99,13 +99,8 @@ NSString *SKZArchivedClassName = @"_isa";
     {
         id plistValue = [self objectForKey:inputKeyPath];
         VIManagedObjectMapSKZ *map = [mapper mapForInputKeyPath:inputKeyPath];
-        NSString *coreDataKey = map.coreDataKey;
-        
-        if ( coreDataKey == nil )
-        {
-            continue;
-        }
-        
+        NSString *coreDataKey = map ? map.coreDataKey : inputKeyPath;
+                
         id managedSubObj = [plistValue createObjectForKey:coreDataKey owner:managedRootObject context:context];
         
         // should we put a checkClass here?
