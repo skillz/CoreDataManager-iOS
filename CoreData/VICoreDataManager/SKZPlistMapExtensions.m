@@ -16,17 +16,33 @@ NSString *SKZArchivedClassName = @"_isa";
 
 @implementation NSObject (SKZPlistMapExtensions)
 
-- (id)createObjectForKey:(NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context
+- (id)createManagedObjectForKey:(NSString *)ownerKey owner:(id)owner context:(NSManagedObjectContext *)context
 {
     return self;
 }
 
 @end
 
+@implementation NSManagedObject (SKZPlistMapExtensions)
+
+- (id)valueForUndefinedKey:(NSString *)key
+{
+    NSLog(@"Value requested for undefined key \"%@\" on class %@", key, [self class]);
+    return nil;
+}
+
+- (void)setValue:(id)value forUndefinedKey:(NSString *)key
+{
+    NSLog(@"setValue requested for undefined key \"%@\" on class %@", key, [self class]);
+}
+
+@end
+
+
 @implementation NSArray (SKZPlistMapExtensions)
 
 
-- (id)createObjectForKey:(nonnull NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context
+- (id)createManagedObjectForKey:(NSString *)ownerKey owner:(id)owner context:(NSManagedObjectContext *)context
 {
     NSUInteger count = [self count];
     id members[count];
@@ -34,7 +50,7 @@ NSString *SKZArchivedClassName = @"_isa";
     
     for ( id plistObj in self )
     {
-        members[i] = [plistObj createObjectForKey:key owner:owner context:context];
+        members[i] = [plistObj createManagedObjectForKey:ownerKey owner:owner context:context];
         i++;
     }
     
@@ -46,7 +62,7 @@ NSString *SKZArchivedClassName = @"_isa";
 
 @implementation NSDictionary (SKZPlistMapExtensions)
 
-- (id)createObjectForKey:(NSString *)ownerKey className:(NSString *)className owner:(id)owner context:(NSManagedObjectContext *)context
+- (id)createManagedObjectForKey:(NSString *)ownerKey className:(NSString *)className owner:(id)owner context:(NSManagedObjectContext *)context
 {
     id managedRootObject = nil;
     
@@ -67,28 +83,37 @@ NSString *SKZArchivedClassName = @"_isa";
     
     VIManagedObjectMapperSKZ *mapper = [cdm mapperForClass:managedObjectClass];
     
-    id comparisonValue = [self objectForKey:mapper.foreignUniqueComparisonKey];
+    NSString *comparisonKey = mapper.foreignUniqueComparisonKey;
     
-    // check for existing object with matching key
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:className];
-    fetchRequest.predicate = [NSPredicate predicateWithFormat:@"(%K == %@)", mapper.uniqueComparisonKey, comparisonValue];
-    
-    NSError *error;
-    NSArray *matchingObjects = [context executeFetchRequest:fetchRequest error:&error];
-    
-    if (error)
+    if ( comparisonKey != nil )
     {
-        CDLog(@"%s Fetch Request Error\n%@",__PRETTY_FUNCTION__ ,[error localizedDescription]);
+        id comparisonValue = [self objectForKey:mapper.foreignUniqueComparisonKey];
+        
+        if ( comparisonValue != nil && ![comparisonValue isEqual:[NSNull null]] )
+        {
+            // check for existing object with matching key
+            NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:className];
+            fetchRequest.predicate = [NSPredicate predicateWithFormat:@"(%K == %@)", mapper.uniqueComparisonKey, comparisonValue];
+            
+            NSError *error;
+            NSArray *matchingObjects = [context executeFetchRequest:fetchRequest error:&error];
+            
+            if (error)
+            {
+                CDLog(@"%s Fetch Request Error\n%@",__PRETTY_FUNCTION__ ,[error localizedDescription]);
+            }
+            
+            NSUInteger matchingObjectsCount = matchingObjects.count;
+            
+            if ( matchingObjectsCount > 0 )
+            {
+                NSAssert(matchingObjectsCount < 2, @"UNIQUE IDENTIFIER IS NOT UNIQUE. MORE THAN ONE MATCHING OBJECT FOUND");
+                managedRootObject = matchingObjects[0];
+            }
+        }
     }
-
-    NSUInteger matchingObjectsCount = matchingObjects.count;
     
-    if ( matchingObjectsCount > 0 )
-    {
-        NSAssert(matchingObjectsCount < 2, @"UNIQUE IDENTIFIER IS NOT UNIQUE. MORE THAN ONE MATCHING OBJECT FOUND");
-        managedRootObject = matchingObjects[0];
-    }
-    else
+    if ( managedRootObject == nil )
     {
         // no match found, so create a new one
         managedRootObject = [cdm managedObjectOfClass:managedObjectClass inContext:context];
@@ -100,8 +125,8 @@ NSString *SKZArchivedClassName = @"_isa";
         id plistValue = [self objectForKey:inputKeyPath];
         VIManagedObjectMapSKZ *map = [mapper mapForInputKeyPath:inputKeyPath];
         NSString *coreDataKey = map ? map.coreDataKey : inputKeyPath;
-                
-        id managedSubObj = [plistValue createObjectForKey:coreDataKey owner:managedRootObject context:context];
+                        
+        id managedSubObj = [plistValue createManagedObjectForKey:coreDataKey owner:managedRootObject context:context];
         
         // should we put a checkClass here?
         
@@ -115,27 +140,27 @@ NSString *SKZArchivedClassName = @"_isa";
     return managedRootObject;
 }
 
-- (id)createObjectForKey:(nonnull NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context
+- (id)createManagedObjectForKey:(NSString *)ownerKey owner:(id)owner context:(NSManagedObjectContext *)context
 {
     NSString *className = [self objectForKey:SKZArchivedClassName];
     
-    return [self createObjectForKey:key className:className owner:owner context:context];
+    return [self createManagedObjectForKey:ownerKey className:className owner:owner context:context];
 }
 
 @end
 
 @implementation NSString (SKZPlistMapExtensions)
 
-- (id)createObjectForKey:(nonnull NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context
+- (id)createManagedObjectForKey:(NSString *)ownerKey owner:(id)owner context:(NSManagedObjectContext *)context
 {
-    if ( [key isEqualToString:SKZArchivedClassName] )
+    if ( ownerKey == nil || [ownerKey isEqualToString:SKZArchivedClassName] )
     {
         return nil;
     }
     
     VICoreDataManagerSKZ *cdm = [VICoreDataManagerSKZ sharedInstance];
     VIManagedObjectMapperSKZ *mapper = [cdm mapperForClass:[owner class]];
-    VIManagedObjectMapSKZ *map = [mapper mapForCoreDataKey:key];
+    VIManagedObjectMapSKZ *map = [mapper mapForCoreDataKey:ownerKey];
     
     id convertedObj = nil;
     
@@ -149,7 +174,7 @@ NSString *SKZArchivedClassName = @"_isa";
         return convertedObj;
     }
     
-    return [super createObjectForKey:key owner:owner context:context];
+    return [super createManagedObjectForKey:ownerKey owner:owner context:context];
 }
     
                              
