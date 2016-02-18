@@ -13,31 +13,38 @@ CF_EXPORT NSString *SKZArchivedClassNameKey;
 
 @interface NSObject (SKZPlistMapExtensions)
 
-- (id)createObjectForKey:(nonnull NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context;
+- (id)createManagedObjectForKey:(NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context;
+
+@end
+
+@interface NSManagedObject (SKZPlistMapExtensions)
+
+- (id)valueForUndefinedKey:(NSString *)key;
+- (void)setValue:(id)value forUndefinedKey:(NSString *)key;
 
 @end
 
 @interface NSArray (SKZPlistMapExtensions)
 
-- (id)createObjectForKey:(nonnull NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context;
+- (id)createManagedObjectForKey:(NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context;
 
 @end
 
 @interface NSDictionary (SKZPlistMapExtensions)
 
-- (id)createObjectForKey:(nonnull NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context;
+- (id)createManagedObjectForKey:(NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context;
 
 @end
 
 @interface NSString (SKZPlistMapExtensions)
 
-- (id)createObjectForKey:(nonnull NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context;
+- (id)createManagedObjectForKey:(NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context;
 
 @end
 
 @interface NSNumber (SKZPlistMapExtensions)
 
-- (id)createObjectForKey:(nonnull NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context;
+- (id)createManagedObjectForKey:(NSString *)key owner:(id)owner context:(NSManagedObjectContext *)context;
 
 @end
 

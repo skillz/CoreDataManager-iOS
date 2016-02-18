@@ -104,4 +104,5 @@
 + (NSArray *)fetchAllForPredicateSKZ:(NSPredicate *)predicate forManagedObjectContext:(NSManagedObjectContext *)contextOrNil;
 + (id)fetchForPredicateSKZ:(NSPredicate *)predicate forManagedObjectContext:(NSManagedObjectContext *)contextOrNil;
 
+
 @end
