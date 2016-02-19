@@ -127,9 +127,7 @@ NSString *SKZArchivedClassName = @"_isa";
         NSString *coreDataKey = map ? map.coreDataKey : inputKeyPath;
                         
         id managedSubObj = [plistValue createManagedObjectForKey:coreDataKey owner:managedRootObject context:context];
-        
-        // should we put a checkClass here?
-        
+
         // nil check necessary because NSString's createObject can return nil for the _isa key
         if ( managedSubObj != nil )
         {

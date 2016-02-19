@@ -541,7 +541,7 @@ NSInteger blockNumber = 0;
     while (!mapper && objectClass)
     {
         objectClass = [objectClass superclass];
-        mapper = self.mapperCollection[className];
+        mapper = self.mapperCollection[NSStringFromClass(objectClass)];
         
         if (objectClass == [NSManagedObject class] && !mapper)
         {
